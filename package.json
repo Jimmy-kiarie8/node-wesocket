@@ -1,0 +1,21 @@
+{
+  "name": "nodeserver",
+  "version": "1.0.0",
+  "description": "Websocket ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build",
+    "serve": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jimmy-kiarie8/node-wesocket.git"
+  },
+  "author": "Jimmy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jimmy-kiarie8/node-wesocket/issues"
+  },
+  "homepage": "https://github.com/Jimmy-kiarie8/node-wesocket#readme"
+}
