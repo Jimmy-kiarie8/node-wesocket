@@ -8,11 +8,10 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const dataHistory = [];
 const clients = new Set();
+require('dotenv').config()
 
-const uri =
-  "mongodb+srv://jimkiarie8:t5nADGdMD9Ky1lZu@logixsaas.2lqn8ko.mongodb.net/?retryWrites=true&w=majority";
+const uri = process.env.MONGODB_URI;
 const Data = require("./models/data.js");
-const router = express.Router();
 
 // define a handler for WebSocket connections
 wss.on("connection", (ws) => {
