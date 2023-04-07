@@ -7,12 +7,14 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const dataHistory = [];
+let locationHistory = null;
 const clients = new Set();
-require('dotenv').config()
+require("dotenv").config();
 
 const uri = process.env.MONGODB_URI;
 const Data = require("./models/data.js");
-
+connect();
+getPositions();
 // define a handler for WebSocket connections
 wss.on("connection", (ws) => {
   // console.log("WebSocket connection established");
@@ -22,10 +24,13 @@ wss.on("connection", (ws) => {
   // add new client to the set of connected clients
   clients.add(ws);
 
-  const historyMsg = { type: "history", history: getDataHistory() };
-  // const historyMsg = { type: "history", history: getLocation() };
+  // const historyMsg = { type: "history", history: getDataHistory() };
+
+  // const historyMsg = { type: "history", history: historyMsg };
+  // const historyMsg = { type: "history", history: getPositions() };
+  // console.log("🚀 ~ file: index.js:30 ~ wss.on ~ historyMsg:", historyMsg);
   wss.clients.forEach((client) => {
-    client.send(JSON.stringify(historyMsg));
+    client.send(JSON.stringify(locationHistory));
   });
 
   // send the list of connected clients to all connected clients
@@ -44,7 +49,7 @@ wss.on("connection", (ws) => {
     // console.log(`Received message: ${message}`);
     const data = JSON.parse(message);
     store(data);
-    dataHistory.push(data);
+    // dataHistory.push(data);
     // broadcast the message to all connected clients
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -81,8 +86,6 @@ async function connect() {
   }
 }
 
-connect();
-
 async function store(data) {
   const newData = new Data({
     latitude: data.latitude,
@@ -90,6 +93,7 @@ async function store(data) {
     timestamp: new Date(data.timestamp),
     uid: data.uid,
     name: data.name,
+    phone: data.phone,
     bearing: data.bearing,
     orderId: data.orderId,
   });
@@ -104,16 +108,41 @@ async function store(data) {
     });
 }
 
-async function getLocation() {
+async function getLocations() {
   const oneHourAgo = Date.now() - 60 * 60 * 1000; // Timestamp for 1 hour ago
-
- return Data.find({
+  let dataArr = null;
+  await Data.find({
     timestamp: { $gte: oneHourAgo, $lt: Date.now() },
   })
     .then((data) => {
-      console.log("Retrieved data:", data);
+      // console.log("🚀 ~ file: index.js:116 ~ .then ~ data:", data)
+      dataArr = data;
     })
     .catch((err) => {
       console.error("Error retrieving data:", err);
     });
+  // console.log("🚀 ~ file: index.js:125 ~ getLocation ~ dataArr:", dataArr);
+
+  return dataArr;
+}
+
+async function getPositions() {
+  let data = [];
+  await Data.distinct("uid")
+  .then(uidValues => {
+    const promises = uidValues.map(uid => {
+      return Data.findOne({ uid: uid }).sort({ timestamp: -1 });
+    });
+    return Promise.all(promises);
+  })
+  .then(docs => {
+    data =  docs;
+    console.log("Last documents for all uids:", docs);
+  })
+  .catch(err => {
+    console.error("Error retrieving last documents for all uids:", err);
+  });
+  locationHistory = { type: "history", history: data };
+  // return data
+
 }
